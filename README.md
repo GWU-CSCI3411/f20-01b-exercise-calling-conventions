@@ -1,11 +1,11 @@
 # Lecture Exercise: Calling Conventions
 
 In class, we discussed calling conventions for 32-bit x86.
-This exercise challenges you and your group to reverse engineer the 64 bit x86 calling conventions.
+This exercise challenges you and your group to reverse engineer the 64-bit x86 calling conventions.
 
 ## How to Work in a Group
 
-The main rule I want each group to abide by is this:
+In all group activities in class and lab, the main rule I want each group to abide by is this:
 
 > Your group should *not* proceed with additional implementation or debugging until *everyone* understands all steps and logic up till now.
 
@@ -19,23 +19,24 @@ You learn material much better when teaching it, so I want you to demonstrate pa
 The Makefile includes the following commands:
 
 ```
-$ make obj
+$ make
+$ make obj.o
 $ make bin
 $ make clean
 ```
 
-Note that `make obj` is identical to a simple `make`.
+Note that `make obj.o` is identical to a simple `make`.
 
 The `main.c` file is boring and, since every executable binary requires a `main` function, it is there just to allow you to make an executable program.
 `calls.c` is going to be the main focus of today.
-Currently it only has one function that calls another.
+Currently it only has one function that calls another, which then calls another.
 
 ## Calling Conventions
 
 Recall that a calling convention is just a set of assumptions made by the calling function (`caller`) and the called function (`callee`) when a function is called.
 Calling conventions exist so that
 
-1. when a function is called, the caller knows which of the registers it was using it should save, and which the callee saves, and
+1. when a function is called, the caller knows which of its registers it should save, and which the callee saves, and
 2. how to pass arguments and get return values.
 
 The calling convention assumptions codify:
@@ -48,7 +49,7 @@ The calling convention assumptions codify:
 
 `objdump` is a program that allows us to look at the inner deals of an object (i.e. a `.o` file) or binary.
 It has a boat-load of features, but we're going to be using `objdump -S` which dumps out the assembly code for your object/binary.
-On most systems, it does something magical: it normally outputs the C code interspersed with the assembly!^[Except on repl.it because we don't get nice things.]
+On most systems, it does something magical: it outputs the C code *interspersed* with the assembly!
 This is a great way to learn assembly.
 For example, check this out:
 
@@ -90,18 +91,20 @@ caller(void)
   11:	5d                   	pop    %rbp
   12:	c3                   	retq
 ```
-
-Notice the `callee()` above instruction `b`!
-That's essentially saying that the `callq` instruction corresponds to the function call `callee()`.
+If we look at the following lines,
+```
+	callee();
+   b:	e8 00 00 00 00       	callq  10 <caller+0x9>
+```
+the `callee()` C code above, corresponds to the `callq` assembly instruction.
+You can see what assembly the compiler creates for the corresponding lines of C.
 Cool!
 
-Note, in that output, you have three columns.
-
+Note, in that output, you have three columns:
 ```
    b:	e8 00 00 00 00       	callq  10 <caller+0x9>
 |-1-| |-----------2----------| |---------3---------|
 ```
-
 Column 1 is the address of the instruction, 2 is the machine code for
 the instruction, and 3 is the "human readable" instruction.
 
@@ -109,26 +112,27 @@ the instruction, and 3 is the "human readable" instruction.
 
 Your goal is to answer the initial set of questions below:
 Think of this all as a puzzle.
+You'll need to make a lot of guesses, and come up with ways to test those guesses.
 You have to come up with ideas about how to change the code to derive the answers.
 The questions:
 
-- Can you explain how the assembly behaves as you'd expect the C to in the provided code?
+- Can you explain how the assembly behavior is identical to the behavior youd expect from the C?
 - How does the prologue for the `callee` change when you add the following local variables? Why?
 	```
 	int a = 2, b = 4;
 	```
-- How is one argument passed into a function?
+- How is the *first argument* passed into a function?
 - How is a *second argument* passed into a function?
-- How about the *6th argument*?
+- How about the *8th argument*?
 - How is the return value passed from `callee` to `caller`?
 - Run `make bin` which creates an executable binary (run it with `./bin`).
-	Use `objdump` on `bin`.
-	Why is there so much extra stuff? What is all of that stuff?
+	Run `objdump -S bin`.
+	Why is there so much extra stuff? 
+	What is all of that stuff?
+	Once you have a few hypothesis, check [this out](http://dbp-consulting.com/tutorials/debugging/linuxProgramStartup.html).
 
 Much harder questions:
 
-- Change the local variables from `int a = 2, b = 4;` to `int a, b;` for a simple invocation between caller and callee.
-	Why does their allocation disappear from the prologue?
 - Change the `-O0` (note that's a capital `o`, followed by the digit `0`) to `-O3`.
 	That enables strong compiler optimizations.
 	Explain what happens.
@@ -141,8 +145,9 @@ Much harder questions:
 
 A few pieces of information:
 
-- `%r*x` - register `*` (e.g. the `a` register for `%rax`)
-- `%r#` - where `#` is a number (starting at `8`) -- the `#`-th register, just another name for more registers
+- `%r*x` - 64-bit register `*` (e.g. the `a` register for `%rax`)
+- `%e*x` - 32-bit register `*` (e.g. `a` register in 32 bit bit `%eax`)
+- `%r#` or `%r#d` - where `#` is a number (starting at `8`) -- the `#`-th register, just another name for more registers
 - `%rsp` - stack pointer (the bottom of the stack -- remember a function call expands the stack *downwards* from high addresses to lower addresses)
 - `%rbp` - the frame pointer that points to the start of the invocation frame for the current function
 - `$0x#` - is a hexdecimal constant value `#`.
@@ -155,7 +160,7 @@ They often are concerned with setting up the stack, and returning to the previou
 Most numerical constants in this assembly are hexdecimal (base-16), not base-10.
 
 Some common instructions follow.
-Note that the `q` postfix on instructions means that it is a 64-bit variant, so the `q` can be ignored for now.
+Note that the `q` postfix on instructions means that it is a 64-bit variant -- and `l` is 32-bit -- so the `l`/`q` postfix can be ignored for now.
 
 - `call fn` pushes the instruction *after* this `call` onto the stack, and jumps to the function `fn`.
 	Note that `fn` might be a little strange (a relative address directly below the call instruction?).
