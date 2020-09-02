@@ -77,20 +77,25 @@ caller(void)
   11:	5d                   	pop    %rbp
   12:	c3                   	retq
 ```
+
 If we look at the following lines,
+
 ```
 	callee();
    b:	e8 00 00 00 00       	callq  10 <caller+0x9>
 ```
+
 the `callee()` C code above, corresponds to the `callq` assembly instruction.
 You can see what assembly the compiler creates for the corresponding lines of C.
 Cool!
 
 Note, in that output, you have three columns:
+
 ```
    b:	e8 00 00 00 00       	callq  10 <caller+0x9>
 |-1-| |-----------2----------| |---------3---------|
 ```
+
 Column 1 is the address of the instruction, 2 is the machine code for
 the instruction, and 3 is the "human readable" instruction.
 
