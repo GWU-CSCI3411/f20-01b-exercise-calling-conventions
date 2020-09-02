@@ -63,21 +63,7 @@ obj.o:     file format elf64-x86-64
 
 Disassembly of section .text:
 
-0000000000000000 <callee>:
-#include <stdio.h>
-
-void
-callee(void)
-{
-   0:	55                   	push   %rbp
-   1:	48 89 e5             	mov    %rsp,%rbp
-
-}
-   4:	90                   	nop
-   5:	5d                   	pop    %rbp
-   6:	c3                   	retq
-
-0000000000000007 <caller>:
+...
 
 void
 caller(void)
