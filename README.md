@@ -109,9 +109,11 @@ The questions:
 
 - Can you explain how the assembly behavior is identical to the behavior youd expect from the C?
 - How does the prologue for the `callee` change when you add the following local variables? Why?
+
 	```
 	int a = 2, b = 4;
 	```
+	
 - How is the *first argument* passed into a function?
 - How is a *second argument* passed into a function?
 - How about the *8th argument*?
